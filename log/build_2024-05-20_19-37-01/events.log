@@ -1,0 +1,70 @@
+[0.000000] (-) TimerEvent: {}
+[0.000931] (safety_controller) JobQueued: {'identifier': 'safety_controller', 'dependencies': OrderedDict()}
+[0.001135] (safety_controller) JobStarted: {'identifier': 'safety_controller'}
+[0.094883] (-) TimerEvent: {}
+[0.195837] (-) TimerEvent: {}
+[0.296499] (-) TimerEvent: {}
+[0.397598] (-) TimerEvent: {}
+[0.498026] (-) TimerEvent: {}
+[0.598528] (-) TimerEvent: {}
+[0.698974] (-) TimerEvent: {}
+[0.799614] (-) TimerEvent: {}
+[0.900104] (-) TimerEvent: {}
+[1.000641] (-) TimerEvent: {}
+[1.101542] (-) TimerEvent: {}
+[1.202016] (-) TimerEvent: {}
+[1.302475] (-) TimerEvent: {}
+[1.402942] (-) TimerEvent: {}
+[1.503502] (-) TimerEvent: {}
+[1.603934] (-) TimerEvent: {}
+[1.704535] (-) TimerEvent: {}
+[1.805808] (-) TimerEvent: {}
+[1.906387] (-) TimerEvent: {}
+[2.006747] (-) TimerEvent: {}
+[2.107745] (-) TimerEvent: {}
+[2.208156] (-) TimerEvent: {}
+[2.308564] (-) TimerEvent: {}
+[2.393684] (safety_controller) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/marcel/ros2_ws/src/safety_controller/build/safety_controller/build', '--no-deps', 'symlink_data'], 'cwd': '/home/marcel/ros2_ws/src/safety_controller/build/safety_controller', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'marcel', 'LC_TIME': 'de_DE.UTF-8', 'XDG_SESSION_TYPE': 'wayland', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/home/marcel/ros2_ws/install/smach_msgs/lib:/home/marcel/ros2_ws/install/robile_interfaces/lib:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib', 'HOME': '/home/marcel', 'OLDPWD': '/home/marcel/ros2_ws/src/safety_controller/safety_controller', 'DESKTOP_SESSION': 'ubuntu', 'ROS_PYTHON_VERSION': '3', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'LC_MONETARY': 'de_DE.UTF-8', 'SYSTEMD_EXEC_PID': '5708', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'IM_CONFIG_PHASE': '1', 'WAYLAND_DISPLAY': 'wayland-0', 'COLCON_PREFIX_PATH': '/home/marcel/ros2_ws/install', 'ROS_DISTRO': 'humble', 'LOGNAME': 'marcel', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'XDG_SESSION_CLASS': 'user', 'USERNAME': 'marcel', 'TERM': 'xterm-256color', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/home/marcel/ros2_ws/install/py_trees_ros/bin:/opt/ros/humble/bin:/home/marcel/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin', 'SESSION_MANAGER': 'local/marcel-Lenovo-V320-17IKB:@/tmp/.ICE-unix/1369,unix/marcel-Lenovo-V320-17IKB:/tmp/.ICE-unix/1369', 'XDG_MENU_PREFIX': 'gnome-', 'LC_ADDRESS': 'de_DE.UTF-8', 'GNOME_TERMINAL_SCREEN': '/org/gnome/Terminal/screen/dd92d138_0d9a_4dce_be51_6c44424ec570', 'GNOME_SETUP_DISPLAY': ':1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'LC_TELEPHONE': 'de_DE.UTF-8', 'XMODIFIERS': '@im=ibus', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XAUTHORITY': '/run/user/1000/.mutter-Xwaylandauth.8XOUN2', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'GNOME_TERMINAL_SERVICE': ':1.149', 'SSH_AGENT_LAUNCHER': 'gnome-keyring', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'AMENT_PREFIX_PATH': '/home/marcel/ros2_ws/install/executive_smach:/home/marcel/ros2_ws/install/safety_controller:/home/marcel/ros2_ws/install/smach_ros:/home/marcel/ros2_ws/install/smach_msgs:/home/marcel/ros2_ws/install/smach:/home/marcel/ros2_ws/install/robile_reach_goal:/home/marcel/ros2_ws/install/robile_navigation:/home/marcel/ros2_ws/install/robile_interfaces:/home/marcel/ros2_ws/install/robile_gazebo:/home/marcel/ros2_ws/install/robile_description:/home/marcel/ros2_ws/install/robile_control_simple:/home/marcel/ros2_ws/install/robile_bringup:/home/marcel/ros2_ws/install/py_trees_ros:/home/marcel/ros2_ws/install/kelo_tulip:/opt/ros/humble', 'SHELL': '/bin/bash', 'LC_NAME': 'de_DE.UTF-8', 'QT_ACCESSIBILITY': '1', 'GDMSESSION': 'ubuntu', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'LC_MEASUREMENT': 'de_DE.UTF-8', 'LC_IDENTIFICATION': 'de_DE.UTF-8', 'QT_IM_MODULE': 'ibus', 'PWD': '/home/marcel/ros2_ws/src/safety_controller/build/safety_controller', 'LC_ALL': 'en_US.UTF-8', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/marcel/ros2_ws/src/safety_controller/build/safety_controller/prefix_override:/home/marcel/ros2_ws/src/safety_controller/install/safety_controller/lib/python3.10/site-packages:/home/marcel/ros2_ws/build/safety_controller:/home/marcel/ros2_ws/install/safety_controller/lib/python3.10/site-packages:/home/marcel/ros2_ws/build/smach_ros:/home/marcel/ros2_ws/install/smach_ros/lib/python3.10/site-packages:/home/marcel/ros2_ws/install/smach_msgs/local/lib/python3.10/dist-packages:/home/marcel/ros2_ws/build/robile_reach_goal:/home/marcel/ros2_ws/build/smach:/home/marcel/ros2_ws/install/smach/lib/python3.10/site-packages:/home/marcel/ros2_ws/build/robile_control_simple:/home/marcel/ros2_ws/build/robile_bringup:/home/marcel/ros2_ws/build/py_trees_ros:/home/marcel/ros2_ws/install/robile_reach_goal/lib/python3.10/site-packages:/home/marcel/ros2_ws/install/robile_navigation/local/lib/python3.10/dist-packages:/home/marcel/ros2_ws/install/robile_interfaces/local/lib/python3.10/dist-packages:/home/marcel/ros2_ws/install/robile_control_simple/lib/python3.10/site-packages:/home/marcel/ros2_ws/install/robile_bringup/lib/python3.10/site-packages:/home/marcel/ros2_ws/install/py_trees_ros/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages', 'LC_NUMERIC': 'de_DE.UTF-8', 'LC_PAPER': 'de_DE.UTF-8', 'COLCON': '1', 'VTE_VERSION': '6800', 'CMAKE_PREFIX_PATH': '/home/marcel/ros2_ws/install/executive_smach:/home/marcel/ros2_ws/install/smach_msgs:/home/marcel/ros2_ws/install/robile_navigation:/home/marcel/ros2_ws/install/robile_interfaces:/home/marcel/ros2_ws/install/robile_gazebo:/home/marcel/ros2_ws/install/robile_description:/home/marcel/ros2_ws/install/kelo_tulip:/opt/ros/humble/share/ament_cmake/cmake:/opt/ros/humble/share/ament_cmake/cmake:/opt/ros/humble/share/ament_cmake/cmake'}, 'shell': False}
+[2.408862] (-) TimerEvent: {}
+[2.509463] (-) TimerEvent: {}
+[2.609896] (-) TimerEvent: {}
+[2.710419] (-) TimerEvent: {}
+[2.810890] (-) TimerEvent: {}
+[2.911408] (-) TimerEvent: {}
+[3.011745] (-) TimerEvent: {}
+[3.112330] (-) TimerEvent: {}
+[3.214331] (-) TimerEvent: {}
+[3.314922] (-) TimerEvent: {}
+[3.406567] (safety_controller) StdoutLine: {'line': b'running develop\n'}
+[3.407249] (safety_controller) StderrLine: {'line': b'/usr/lib/python3/dist-packages/setuptools/command/easy_install.py:158: EasyInstallDeprecationWarning: easy_install command is deprecated. Use build and pip and other standards-based tools.\n'}
+[3.407750] (safety_controller) StderrLine: {'line': b'  warnings.warn(\n'}
+[3.415058] (-) TimerEvent: {}
+[3.516364] (-) TimerEvent: {}
+[3.617619] (-) TimerEvent: {}
+[3.672524] (safety_controller) StderrLine: {'line': b'/usr/lib/python3/dist-packages/pkg_resources/__init__.py:116: PkgResourcesDeprecationWarning: 1.12.1-git20200711.33e2d80-dfsg1-0.6 is an invalid version and will not be supported in a future release\n'}
+[3.672777] (safety_controller) StderrLine: {'line': b'  warnings.warn(\n'}
+[3.717738] (-) TimerEvent: {}
+[3.818222] (-) TimerEvent: {}
+[3.919890] (-) TimerEvent: {}
+[4.020282] (-) TimerEvent: {}
+[4.120795] (-) TimerEvent: {}
+[4.193419] (safety_controller) StdoutLine: {'line': b'running egg_info\n'}
+[4.193730] (safety_controller) StdoutLine: {'line': b'writing safety_controller.egg-info/PKG-INFO\n'}
+[4.194009] (safety_controller) StdoutLine: {'line': b'writing dependency_links to safety_controller.egg-info/dependency_links.txt\n'}
+[4.194259] (safety_controller) StdoutLine: {'line': b'writing entry points to safety_controller.egg-info/entry_points.txt\n'}
+[4.194533] (safety_controller) StdoutLine: {'line': b'writing requirements to safety_controller.egg-info/requires.txt\n'}
+[4.194964] (safety_controller) StdoutLine: {'line': b'writing top-level names to safety_controller.egg-info/top_level.txt\n'}
+[4.198817] (safety_controller) StdoutLine: {'line': b"reading manifest file 'safety_controller.egg-info/SOURCES.txt'\n"}
+[4.202832] (safety_controller) StdoutLine: {'line': b"writing manifest file 'safety_controller.egg-info/SOURCES.txt'\n"}
+[4.220909] (-) TimerEvent: {}
+[4.319243] (safety_controller) StdoutLine: {'line': b'running build_ext\n'}
+[4.319696] (safety_controller) StdoutLine: {'line': b'Creating /home/marcel/ros2_ws/src/safety_controller/install/safety_controller/lib/python3.10/site-packages/safety-controller.egg-link (link to .)\n'}
+[4.321014] (-) TimerEvent: {}
+[4.321389] (safety_controller) StdoutLine: {'line': b'Installing state_node script to /home/marcel/ros2_ws/src/safety_controller/install/safety_controller/lib/safety_controller\n'}
+[4.322041] (safety_controller) StdoutLine: {'line': b'\n'}
+[4.322265] (safety_controller) StdoutLine: {'line': b'Installed /home/marcel/ros2_ws/src/safety_controller/build/safety_controller\n'}
+[4.322598] (safety_controller) StdoutLine: {'line': b'running symlink_data\n'}
+[4.421164] (-) TimerEvent: {}
+[4.455131] (safety_controller) CommandEnded: {'returncode': 0}
+[4.489225] (safety_controller) JobEnded: {'identifier': 'safety_controller', 'rc': 0}
+[4.490797] (-) EventReactorShutdown: {}
