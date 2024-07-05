@@ -22,7 +22,6 @@ setup(
         'console_scripts': [
             'state_node = safety_controller.state_machine:main',
             'tree_node = safety_controller.tree:main',
-            'robileSim = safety_controller.robileSimObstacleAvoidance:main',
         ],
     },
 )
