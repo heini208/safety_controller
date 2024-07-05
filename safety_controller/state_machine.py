@@ -19,8 +19,6 @@ class MonitorBatteryAndCollision(smach.State):
     """State to monitor the battery level and possible collisions
     """
     def __init__(self, node):
-        # TODO: define outcomes, class variables, and desired publisher/subscribers
-        # YOUR CODE HERE
         smach.State.__init__(self, outcomes=['low_battery', 'collision_detected', 'idle'])
         self.node = node
         self.battery_voltage = 100.0
@@ -42,7 +40,6 @@ class MonitorBatteryAndCollision(smach.State):
             self.collision_detected = False
 
     def execute(self, userdata):
-        # TODO: implement state execution logic and return outcome
         rclpy.spin_once(self.node)
         if self.battery_voltage < self.battery_threshold:
             return 'low_battery'
@@ -57,7 +54,6 @@ class RotateBase(smach.State):
     """State to rotate the Robile base
     """
     def __init__(self, node):
-        # TODO: define outcomes, class variables, and desired publisher/subscribers
         smach.State.__init__(self, outcomes=['battery_ok'])
         self.node = node
         self.battery_voltage = 100.0
@@ -71,7 +67,6 @@ class RotateBase(smach.State):
         self.battery_level = msg.data
 
     def execute(self, userdata):
-        # TODO: implement state execution logic and return outcome
         twist = Twist()
         twist.angular.z = self.rotation_speed 
         self.publisher.publish(twist)
@@ -89,14 +84,12 @@ class StopMotion(smach.State):
     """State to stop the robot's motion
     """
     def __init__(self, node):
-        # TODO: define outcomes, class variables, and desired publisher/subscribers
         smach.State.__init__(self, outcomes=['collision_avoided'])
         self.node = node
         self.publisher = self.node.create_publisher(Twist, 'cmd_vel', 10)
 
 
     def execute(self, userdata):
-        # TODO: implement state execution logic and return outcome
         twist = Twist()
         twist.linear.x = 0.0
         twist.angular.z = 0.0
@@ -107,14 +100,9 @@ class StopMotion(smach.State):
             return 'collision_avoided'
 
 
-# TODO: define any additional states if necessary
-### YOUR CODE HERE ###
-
 def main(args=None):
     """Main function to initialise and execute the state machine
     """
-
-    # TODO: initialise a ROS2 node, set any threshold values, and define the state machine
     rclpy.init(args=args)
     node = Node('robile_state_machine')
 

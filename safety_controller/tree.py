@@ -20,9 +20,6 @@ class Rotate(pt.behaviour.Behaviour):
                  topic_name="/cmd_vel",
                  ang_vel=1.0):
         super(Rotate, self).__init__(name)
-
-        # TODO: initialise any necessary class variables
-        # YOUR CODE HERE
         self.topic_name = topic_name
         self.rotation_speed = ang_vel
 
@@ -37,8 +34,6 @@ class Rotate(pt.behaviour.Behaviour):
             error_message = "didn't find 'node' in setup's kwargs [{}][{}]".format(self.qualified_name)
             raise KeyError(error_message) from e 
 
-        # TODO: setup any necessary publishers or subscribers
-
         self.publisher = self.node.create_publisher(Twist, self.topic_name, 10)
         return True
 
@@ -50,12 +45,6 @@ class Rotate(pt.behaviour.Behaviour):
         self.logger.info("[ROTATE] update: updating rotate behaviour")
         self.logger.debug("%s.update()" % self.__class__.__name__)
 
-        # TODO: implement the primary function of the behaviour and decide which status to return 
-        # based on the structure of your behaviour tree
-
-        # Hint: to return a status, for example, SUCCESS, pt.common.Status.SUCCESS can be used
-
-        # YOUR CODE HERE
         twist_msg = Twist()
         twist_msg.angular.z = self.rotation_speed
         self.publisher.publish(twist_msg)
@@ -67,11 +56,6 @@ class Rotate(pt.behaviour.Behaviour):
         i.e. when the status changes from RUNNING to SUCCESS or FAILURE
         """
         self.logger.info("[ROTATE] terminate: publishing zero angular velocity")
-
-        # TODO: implement the termination of the behaviour, i.e. what should happen when the behaviour 
-        # finishes its execution
-
-        # YOUR CODE HERE
         twist_msg = Twist()
         twist_msg.linear.x = 0
         twist_msg.linear.y = 0
@@ -84,10 +68,6 @@ class Rotate(pt.behaviour.Behaviour):
 class StopMotion(pt.behaviour.Behaviour):
     """Stops the robot when it is controlled using a joystick or with a cmd_vel command
     """
-    
-    # TODO: Implement a behaviour to stop the robot's motion
-
-    # YOUR CODE HERE
     def __init__(self, name="stop platform", topic_name="/cmd_vel"):
             super(StopMotion, self).__init__(name)
             self.logger.info("[STOP] initialising stopping behavior")
@@ -123,7 +103,6 @@ class BatteryStatus2bb(ptr.subscribers.ToBlackboard):
                          qos_profile=ptr.utilities.qos_profile_unlatched())
         self.blackboard.register_key(key='battery_low_warning', access=pt.common.Access.WRITE)
 
-        # YOUR CODE HERE
         self.blackboard.battery_low_warning = False
         self.threshold = threshold
 
@@ -138,11 +117,6 @@ class BatteryStatus2bb(ptr.subscribers.ToBlackboard):
         """check battery voltage level stored in self.blackboard.battery. By comparing with 
         threshold value, update the value of self.blackboad.battery_low_warning
         """
-
-        # TODO: based on the battery voltage level, update the value of self.blackboard.battery_low_warning
-        # and return the status of the behaviour based on your logic of the behaviour tree
-        
-        # YOUR CODE HERE
         status = super(BatteryStatus2bb, self).update()
         if self.blackboard.battery < self.threshold:
             self.blackboard.battery_low_warning = True
@@ -165,8 +139,6 @@ class LaserScan2bb(ptr.subscribers.ToBlackboard):
                                                 history=QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_LAST,
                                                 depth=10))
         
-        # TODO: initialise class variables and blackboard variables
-        # YOUR CODE HERE
         self.blackboard.register_key(key='collison_warning', access=pt.common.Access.WRITE)
         self.blackboard.register_key(key='point_at_min_dist', access=pt.common.Access.WRITE)
         self.blackboard.collison_warning = False
@@ -176,8 +148,6 @@ class LaserScan2bb(ptr.subscribers.ToBlackboard):
 
 
     def update(self):
-        # TODO: impletment the update function to check the laser scan data and update the blackboard variable
-        # YOUR CODE HERE
         status = super(LaserScan2bb, self).update()
 
         if status != pt.common.Status.RUNNING:
@@ -200,7 +170,6 @@ class LaserScan2bb(ptr.subscribers.ToBlackboard):
                 self.blackboard.collison_warning = False
         return pt.common.Status.SUCCESS
 
-#added since there seems to be no check in ros2 pytrees ??
 class checkBlackboardVariable(pt.behaviour.Behaviour):
     def __init__(self, name="Check Blackboard variable", variable_name="dummy", expected=True):
         super(checkBlackboardVariable, self).__init__(name)
@@ -214,7 +183,6 @@ class checkBlackboardVariable(pt.behaviour.Behaviour):
             return pt.common.Status.SUCCESS
         else:
             return pt.common.Status.FAILURE
-### Implement a behaviour tree using your previously implemented behaviours here
 
 import py_trees as pt
 import py_trees_ros as ptr
@@ -229,15 +197,12 @@ def create_root() -> pt.behaviour.Behaviour:
     to rotate if the battery is low and stop if it detects an obstacle in front of it.
     """
 
-    # we define the root node
     root = pt.composites.Parallel(name="root",
                                   policy=pt.common.ParallelPolicy.SuccessOnAll(synchronise=False))    
 
-    ### we create a sequence node called "Topics2BB" and a selector node called "Priorities"
     topics2BB = pt.composites.Sequence("Topics2BB", memory=False)
     priorities = pt.composites.Selector("Priorities", memory=False)
 
-    ### we create an "Idle" node, which is a running node to keep the robot idle
     idle = pt.behaviours.Running(name="Idle")
     
     """
@@ -250,7 +215,6 @@ def create_root() -> pt.behaviour.Behaviour:
     HINT: Some behaviours from pt.behaviours may be useful to use as well.
     """
 
-    # YOUR CODE HERE
     laser_scan2bb = LaserScan2bb()
     battery_status2bb = BatteryStatus2bb()
 
@@ -261,8 +225,6 @@ def create_root() -> pt.behaviour.Behaviour:
         variable_name="collison_warning",
         expected=False 
     )
-    #QUESTION: is there no pt.blackboard.CheckBlackboardVariable in ROS2 ???
-    #also is there no better way to do failure_is_success?
     failure_is_success_collision = pt.decorators.Inverter(
         name="Inverter",
         child=collison_emergency
@@ -283,14 +245,8 @@ def create_root() -> pt.behaviour.Behaviour:
     stop_motion = StopMotion()
     rotate = Rotate()
 
-
-
-    # TODO: construct the behaviour tree structure using the nodes and behaviours defined above
-    # HINT: for reference, the sample tree structure in the README.md file might be useful
-
     root.add_children([topics2BB, priorities])
 
-    # YOUR CODE HERE
     topics2BB.add_children([battery_status2bb, laser_scan2bb])
     priorities.add_children([failure_is_success_collision, failure_is_success_battery, idle])
     collison_emergency.add_children(
