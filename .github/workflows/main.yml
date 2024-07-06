@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'release/*'
   pull_request:
     branches:
       - main
@@ -17,7 +18,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Set up ROS 2 Humble
-      uses: ros-tooling/setup-ros@0.7.7
+      uses: ros-tooling/setup-ros@v0.3.0
       with:
         distribution: humble
         install-packages: |
@@ -25,7 +26,11 @@ jobs:
           python3-rosdep
 
     - name: Update dependencies
-      run: rosdep init && rosdep update
+      run: |
+        if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
+          sudo rosdep init
+        fi
+        rosdep update
 
     - name: Install dependencies
       run: rosdep install --from-paths src --ignore-src -r -y
