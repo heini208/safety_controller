@@ -50,14 +50,17 @@ jobs:
     - name: Build
       run: |
         cd ~/ros_ws
+        source /opt/ros/humble/setup.bash
         colcon build --event-handlers console_cohesion+
 
     - name: Run tests
       run: |
         cd ~/ros_ws
+        source /opt/ros/humble/setup.bash
         colcon test --event-handlers console_cohesion+
 
     - name: Check test results
       run: |
         cd ~/ros_ws
+        source /opt/ros/humble/setup.bash
         colcon test-result --all
