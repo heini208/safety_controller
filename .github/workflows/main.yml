@@ -33,29 +33,29 @@ jobs:
       run: |
         mkdir -p ~/ros_ws/src
         cp -r $GITHUB_WORKSPACE/* ~/ros_ws/src  # Ensure all contents are copied
-        cd ~/ros_ws
+        cd ~/ros2_ws
 
     - name: Update dependencies
       run: |
         source /opt/ros/humble/setup.bash
-        cd ~/ros_ws
+        cd ~/ros2_ws
         rosdep install --from-paths src --ignore-src -r -y
 
     - name: Build
       run: |
         source /opt/ros/humble/setup.bash
-        cd ~/ros_ws
-        colcon build --event-handlers console_cohesion+
+        cd ~/ros2_ws
+        colcon build
 
     - name: Run tests with valid event handlers
       run: |
         source /opt/ros/humble/setup.bash
-        cd ~/ros_ws
-        colcon test --event-handlers console_cohesion+ console_direct+ console_start_end-
+        cd ~/ros2_ws
+        colcon test
 
 
     - name: Check test results
       run: |
         source /opt/ros/humble/setup.bash
-        cd ~/ros_ws
+        cd ~/ros2_ws
         colcon test-result --all
