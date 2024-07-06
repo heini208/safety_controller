@@ -51,7 +51,8 @@ jobs:
       run: |
         source /opt/ros/humble/setup.bash
         cd ~/ros_ws
-        colcon test
+        colcon test --event-handlers console_cohesion+ console_direct+ console_start_end-
+
 
     - name: Check test results
       run: |
