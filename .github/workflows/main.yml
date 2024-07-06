@@ -47,11 +47,12 @@ jobs:
         cd ~/ros_ws
         colcon build --event-handlers console_cohesion+
 
-    - name: Run tests
+    - name: Run tests with verbose output
       run: |
         source /opt/ros/humble/setup.bash
         cd ~/ros_ws
-        colcon test --event-handlers console_cohesion+
+        colcon test --event-handlers console_cohesion+ --verbose
+
 
     - name: Check test results
       run: |
