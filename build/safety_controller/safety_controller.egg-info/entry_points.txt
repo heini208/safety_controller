@@ -1,3 +1,0 @@
-[console_scripts]
-state_node = safety_controller.state_machine:main
-
