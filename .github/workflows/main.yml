@@ -29,29 +29,32 @@ jobs:
         sudo rosdep init || echo "rosdep already initialized"
         rosdep update
 
-    - name: Create ROS workspace
+    - name: Create ROS workspace and link repository
       run: |
         mkdir -p ~/ros_ws/src
-        cd ~/ros_ws/src
-        ln -s $GITHUB_WORKSPACE/* .
+        cp -r $GITHUB_WORKSPACE/* ~/ros_ws/src  # Ensure all contents are copied
         cd ~/ros_ws
 
     - name: Update dependencies
       run: |
         source /opt/ros/humble/setup.bash
+        cd ~/ros_ws
         rosdep install --from-paths src --ignore-src -r -y
 
     - name: Build
       run: |
         source /opt/ros/humble/setup.bash
+        cd ~/ros_ws
         colcon build --event-handlers console_cohesion+
 
     - name: Run tests
       run: |
         source /opt/ros/humble/setup.bash
+        cd ~/ros_ws
         colcon test --event-handlers console_cohesion+
 
     - name: Check test results
       run: |
         source /opt/ros/humble/setup.bash
+        cd ~/ros_ws
         colcon test-result --all
