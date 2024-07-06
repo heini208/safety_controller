@@ -18,15 +18,16 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Set up ROS 2 Humble
-      uses: ros-tooling/setup-ros@0.7.7
-      with:
-        distribution: humble
-        install-packages: |
-          python3-colcon-common-extensions
-          python3-rosdep
-          ros-humble-launch
-          ros-humble-launch-testing
-          ros-humble-launch-ros
+      run: |
+        sudo apt update
+        sudo apt install -y curl gnupg lsb-release
+        sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+        sudo sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list'
+        sudo apt update
+        sudo apt install -y ros-humble-desktop
+        sudo apt install -y python3-colcon-common-extensions python3-rosdep
+        sudo rosdep init || echo "rosdep already initialized"
+        rosdep update
 
     - name: Create ROS workspace
       run: |
@@ -37,30 +38,20 @@ jobs:
 
     - name: Update dependencies
       run: |
-        if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
-          sudo rosdep init
-        fi
-        rosdep update
-
-    - name: Install dependencies
-      run: |
-        cd ~/ros_ws
+        source /opt/ros/humble/setup.bash
         rosdep install --from-paths src --ignore-src -r -y
 
     - name: Build
       run: |
-        cd ~/ros_ws
         source /opt/ros/humble/setup.bash
         colcon build --event-handlers console_cohesion+
 
     - name: Run tests
       run: |
-        cd ~/ros_ws
         source /opt/ros/humble/setup.bash
         colcon test --event-handlers console_cohesion+
 
     - name: Check test results
       run: |
-        cd ~/ros_ws
         source /opt/ros/humble/setup.bash
         colcon test-result --all
