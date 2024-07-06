@@ -24,6 +24,9 @@ jobs:
         install-packages: |
           python3-colcon-common-extensions
           python3-rosdep
+          ros-humble-launch
+          ros-humble-launch-testing
+          ros-humble-launch-ros
 
     - name: Create ROS workspace
       run: |
