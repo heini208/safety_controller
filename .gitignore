@@ -1,0 +1,71 @@
+# Ignore build and install directories
+/build/
+/install/
+
+# Ignore log directory
+/log/
+
+# Ignore files created by colcon
+colcon*log
+
+# Ignore ROS2 workspace overlay
+/overlay_ws/
+
+# Ignore python bytecode
+__pycache__/
+*.py[cod]
+
+# Ignore node_modules in case there are any web-related packages
+/node_modules/
+
+# Ignore VSCode settings
+.vscode/
+
+# Ignore JetBrains IDE settings
+.idea/
+
+# Ignore Emacs/Vim temporary files
+*~
+.*.swp
+.*.swo
+
+# Ignore MacOS system files
+.DS_Store
+
+# Ignore Linux system files
+.trash/
+
+# Ignore Windows system files
+Thumbs.db
+Desktop.ini
+
+# Ignore CMake generated files
+CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+
+# Ignore build-related files
+Makefile
+Makefile.in
+
+# Ignore test result directories
+/test_results/
+
+# Ignore temporary files
+*.tmp
+*.temp
+*.log
+
+# Ignore coverage reports
+/coverage/
+
+# Ignore other miscellaneous files
+*.bak
+*.old
+*.orig
+*.rej
+*.so
+
+# Ignore virtual environment
+/venv/
+.env/
