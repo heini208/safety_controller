@@ -31,7 +31,7 @@ jobs:
 
     - name: Create ROS workspace and link repository
       run: |
-        mkdir -p ~/ros_ws/src
+        mkdir -p ~/ros2_ws/src
         cp -r $GITHUB_WORKSPACE/* ~/ros_ws/src  # Ensure all contents are copied
         cd ~/ros2_ws
 
