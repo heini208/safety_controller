@@ -6,12 +6,13 @@ import launch
 import launch_ros
 import launch_testing
 import rclpy
+import pytest
 from rclpy.node import Node
 from std_msgs.msg import Float32
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
 
-
+@pytest.mark.rostest
 def generate_test_description():
     tree_node = launch_ros.actions.Node(
         package='safety_controller',

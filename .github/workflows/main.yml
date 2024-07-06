@@ -25,7 +25,7 @@ jobs:
           python3-rosdep
 
     - name: Update dependencies
-      run: sudo rosdep init && rosdep update
+      run: rosdep init && rosdep update
 
     - name: Install dependencies
       run: rosdep install --from-paths src --ignore-src -r -y
