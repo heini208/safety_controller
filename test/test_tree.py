@@ -1,5 +1,3 @@
-import os
-import sys
 import time
 import unittest
 import launch
@@ -7,7 +5,6 @@ import launch_ros
 import launch_testing
 import rclpy
 import pytest
-from rclpy.node import Node
 from std_msgs.msg import Float32
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
@@ -29,7 +26,7 @@ def generate_test_description():
     ]), {'tree_node': tree_node}
 
 
-class TestLowBatteryRotation(unittest.TestCase):
+class TestTreeNodeBehaviour(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -49,6 +46,16 @@ class TestLowBatteryRotation(unittest.TestCase):
     def cmd_vel_callback(self, msg):
         self.cmd_vel_msgs.append(msg)
         self.node.get_logger().info(f'Received cmd_vel message: {msg}')
+        
+    def cmd_vel_callback(self, msg):
+        self.cmd_vel_msgs.append(msg)
+        self.node.get_logger().info(f'Received cmd_vel message: {msg}')
+
+    def publish_laser_scan(self, ranges):
+        scan = LaserScan()
+        scan.ranges = ranges
+        self.pub_scan.publish(scan)
+
 
     def test_battery_status(self, tree_node, proc_output):
         subscription_cmd_vel = self.node.create_subscription(
