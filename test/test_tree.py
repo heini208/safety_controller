@@ -48,10 +48,6 @@ class TestTreeNodeBehaviour(unittest.TestCase):
         self.cmd_vel_msgs.append(msg)
         self.node.get_logger().info(f'Received cmd_vel message: {msg}')
 
-    def cmd_vel_callback(self, msg):
-        self.cmd_vel_msgs.append(msg)
-        self.node.get_logger().info(f'Received cmd_vel message: {msg}')
-
     def publish_laser_scan(self, ranges):
         scan = LaserScan()
         scan.ranges = ranges

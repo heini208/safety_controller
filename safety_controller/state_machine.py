@@ -1,5 +1,5 @@
-### Implement the safety functionalities for the Robile by setting up
-### a state machine and implementing all required states here
+# Implement the safety functionalities for the Robile by setting up
+# a state machine and implementing all required states here
 
 import rclpy
 import smach
@@ -16,20 +16,23 @@ from std_msgs.msg import Float32
 class MonitorBatteryAndCollision(smach.State):
     """State to monitor the battery level and possible collisions
     """
+
     def __init__(self, node):
-        smach.State.__init__(self, outcomes=['low_battery', 'collision_detected', 'idle'])
+        smach.State.__init__(
+            self, outcomes=['low_battery', 'collision_detected', 'idle'])
         self.node = node
         self.battery_voltage = 100.0
         self.collision_detected = False
         self.collision_threshold = 0.5
         self.battery_threshold = 20.0
-        self.node.create_subscription(Float32, 'battery_voltage', self.battery_callback, 10)
-        self.node.create_subscription(LaserScan, 'scan', self.collision_callback, 10)
-
+        self.node.create_subscription(
+            Float32, 'battery_voltage', self.battery_callback, 10)
+        self.node.create_subscription(
+            LaserScan, 'scan', self.collision_callback, 10)
 
     def battery_callback(self, msg):
         self.battery_voltage = msg.data
-        
+
     def collision_callback(self, msg):
         if min(msg.ranges) < self.collision_threshold:
             self.collision_detected = True
@@ -46,10 +49,10 @@ class MonitorBatteryAndCollision(smach.State):
             return 'idle'
 
 
-
 class RotateBase(smach.State):
     """State to rotate the Robile base
     """
+
     def __init__(self, node):
         smach.State.__init__(self, outcomes=['battery_ok'])
         self.node = node
@@ -58,7 +61,8 @@ class RotateBase(smach.State):
         self.battery_threshold = 20.0
 
         self.publisher = self.node.create_publisher(Twist, 'cmd_vel', 10)
-        self.node.create_subscription(Float32, 'battery_voltage', self.battery_callback, 10)
+        self.node.create_subscription(
+            Float32, 'battery_voltage', self.battery_callback, 10)
 
     def battery_callback(self, msg):
         self.battery_level = msg.data
@@ -80,11 +84,11 @@ class RotateBase(smach.State):
 class StopMotion(smach.State):
     """State to stop the robot's motion
     """
+
     def __init__(self, node):
         smach.State.__init__(self, outcomes=['collision_avoided'])
         self.node = node
         self.publisher = self.node.create_publisher(Twist, 'cmd_vel', 10)
-
 
     def execute(self, userdata):
         twist = Twist()
