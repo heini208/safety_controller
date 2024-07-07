@@ -9,9 +9,8 @@ from std_msgs.msg import Float32
 from sensor_msgs.msg import LaserScan
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 import numpy as np
-import operator
-
-
+import py_trees.console as console
+import sys
 
 class Rotate(pt.behaviour.Behaviour):
     """Rotates the robot about the z-axis 
@@ -27,12 +26,11 @@ class Rotate(pt.behaviour.Behaviour):
         """Setting up things which generally might require time to prevent delay in the tree initialisation
         """
         self.logger.info("[ROTATE] setting up rotate behaviour")
-        
         try:
             self.node = kwargs['node']
         except KeyError as e:
-            error_message = "didn't find 'node' in setup's kwargs [{}][{}]".format(self.qualified_name)
-            raise KeyError(error_message) from e 
+            error_message = "didn't find 'node' in setup's kwargs [{}]".format(self.qualified_name)
+            raise KeyError(error_message) from e
 
         self.publisher = self.node.create_publisher(Twist, self.topic_name, 10)
         return True
@@ -69,9 +67,9 @@ class StopMotion(pt.behaviour.Behaviour):
     """Stops the robot when it is controlled using a joystick or with a cmd_vel command
     """
     def __init__(self, name="stop platform", topic_name="/cmd_vel"):
-            super(StopMotion, self).__init__(name)
-            self.logger.info("[STOP] initialising stopping behavior")
-            self.topic_name = topic_name
+        super(StopMotion, self).__init__(name)
+        self.logger.info("[STOP] initialising stopping behavior")
+        self.topic_name = topic_name
 
     def setup(self, **kwargs):
         self.logger.info("[STOP MOTION] setting up stop motion behaviour")
@@ -91,9 +89,9 @@ class StopMotion(pt.behaviour.Behaviour):
 class BatteryStatus2bb(ptr.subscribers.ToBlackboard):
     """Checks the battery status
     """
-    def __init__(self, battery_voltage_topic_name: str="/battery_voltage",
-                 name: str='Battery2BB',
-                 threshold: float=30.0):
+    def __init__(self, battery_voltage_topic_name: str = "/battery_voltage",
+                 name: str = 'Battery2BB',
+                 threshold: float = 30.0):
         super().__init__(name=name,
                          topic_name=battery_voltage_topic_name,
                          topic_type=Float32,
@@ -108,16 +106,15 @@ class BatteryStatus2bb(ptr.subscribers.ToBlackboard):
 
 
     def update(self):
-        """Calls the parent to write the raw data to the blackboard and then check against the
-        threshold to determine if a low warning flag should also be updated.
+        """
+        check battery voltage level stored in self.blackboard.battery. By comparing with 
+        threshold value, update the value of self.blackboad.battery_low_warning
         """
         self.logger.info('[BATTERY] update: running battery_status2bb update')
         self.logger.debug("%s.update()" % self.__class__.__name__)
         
-        """check battery voltage level stored in self.blackboard.battery. By comparing with 
-        threshold value, update the value of self.blackboad.battery_low_warning
-        """
-        status = super(BatteryStatus2bb, self).update()
+        
+        super(BatteryStatus2bb, self).update()
         if self.blackboard.battery < self.threshold:
             self.blackboard.battery_low_warning = True
         else:
@@ -127,9 +124,9 @@ class BatteryStatus2bb(ptr.subscribers.ToBlackboard):
 class LaserScan2bb(ptr.subscribers.ToBlackboard):
     """Checks the laser scan measurements to avoid possible collisions.
     """
-    def __init__(self, topic_name: str="/scan",
-                 name: str='Scan2BB',
-                 safe_range: float=0.25):
+    def __init__(self, topic_name: str = "/scan",
+                 name: str = 'Scan2BB',
+                 safe_range: float = 0.25):
         super().__init__(name=name,
                          topic_name=topic_name,
                          topic_type=LaserScan,
@@ -153,7 +150,7 @@ class LaserScan2bb(ptr.subscribers.ToBlackboard):
         if status != pt.common.Status.RUNNING:
             segment_size = 20
             laser_distances = np.array(self.blackboard.laser_scan)
-            full_laser_distance = np.full((580), 50, dtype=float) 
+            full_laser_distance = np.full((580), 50, dtype=float)
             full_laser_distance[:len(laser_distances)] = laser_distances
             laser_distances = full_laser_distance
             laser_distances = np.where(laser_distances != 0, laser_distances, 20.0)
@@ -161,7 +158,7 @@ class LaserScan2bb(ptr.subscribers.ToBlackboard):
 
             distance_segment_mean = np.mean(laser_distances,axis=1)
             min_distance = np.min(distance_segment_mean)
-            self.blackboard.point_at_min_dist = min_distance    
+            self.blackboard.point_at_min_dist = min_distance
             if min_distance < self.safe_range:
                 self.blackboard.collison_warning = True
                 self.logger.info("[LASER SCAN] update: possible collison detected at [%0.3f meters]" %
@@ -183,38 +180,19 @@ class checkBlackboardVariable(pt.behaviour.Behaviour):
             return pt.common.Status.SUCCESS
         else:
             return pt.common.Status.FAILURE
-
-import py_trees as pt
-import py_trees_ros as ptr
-import operator
-
-import py_trees.console as console
-import rclpy
-import sys
-
+             
 def create_root() -> pt.behaviour.Behaviour:
     """Structures a behaviour tree to monitor the battery status, and start
     to rotate if the battery is low and stop if it detects an obstacle in front of it.
     """
 
     root = pt.composites.Parallel(name="root",
-                                  policy=pt.common.ParallelPolicy.SuccessOnAll(synchronise=False))    
+                                  policy=pt.common.ParallelPolicy.SuccessOnAll(synchronise=False))
 
     topics2BB = pt.composites.Sequence("Topics2BB", memory=False)
     priorities = pt.composites.Selector("Priorities", memory=False)
 
     idle = pt.behaviours.Running(name="Idle")
-    
-    """
-    TODO:  The first and second level of the tree structure is defined above, but please
-    define the rest of the tree structure.
-
-    Class definitions for your behaviours are provided in behaviours.py; you also need to fill out
-    the behaviour implementations!
-
-    HINT: Some behaviours from pt.behaviours may be useful to use as well.
-    """
-
     laser_scan2bb = LaserScan2bb()
     battery_status2bb = BatteryStatus2bb()
 
@@ -223,7 +201,7 @@ def create_root() -> pt.behaviour.Behaviour:
     is_no_collison = checkBlackboardVariable(
         name="NoCollison?",
         variable_name="collison_warning",
-        expected=False 
+        expected=False
     )
     failure_is_success_collision = pt.decorators.Inverter(
         name="Inverter",
@@ -272,14 +250,13 @@ def main():
         rclpy.try_shutdown()
         sys.exit(1)
     except KeyboardInterrupt:
-        # user-initiated shutdown
         console.logerror("tree setup interrupted")
         tree.shutdown()
         rclpy.try_shutdown()
         sys.exit(1)
     
     # frequency of ticks
-    tree.tick_tock(period_ms=100)    
+    tree.tick_tock(period_ms=100) 
 
     try:
         rclpy.spin(tree.node)
