@@ -4,10 +4,8 @@
 import rclpy
 import smach
 
-from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
-import yaml
 import time
 from rclpy.node import Node
 from std_msgs.msg import Float32
@@ -25,7 +23,6 @@ class MonitorBatteryAndCollision(smach.State):
         self.collision_detected = False
         self.collision_threshold = 0.5
         self.battery_threshold = 20.0
-        
         self.node.create_subscription(Float32, 'battery_voltage', self.battery_callback, 10)
         self.node.create_subscription(LaserScan, 'scan', self.collision_callback, 10)
 
@@ -34,7 +31,7 @@ class MonitorBatteryAndCollision(smach.State):
         self.battery_voltage = msg.data
         
     def collision_callback(self, msg):
-        if min(msg.ranges) < self.collision_threshold:  
+        if min(msg.ranges) < self.collision_threshold:
             self.collision_detected = True
         else:
             self.collision_detected = False
@@ -68,7 +65,7 @@ class RotateBase(smach.State):
 
     def execute(self, userdata):
         twist = Twist()
-        twist.angular.z = self.rotation_speed 
+        twist.angular.z = self.rotation_speed
         self.publisher.publish(twist)
 
         while rclpy.ok():
@@ -120,10 +117,9 @@ def main(args=None):
         smach.StateMachine.add('STOP', StopMotion(node),
                                transitions={'collision_avoided': 'MONITOR'})
 
-    outcome = state_machine.execute()
-
     node.destroy_node()
     rclpy.shutdown()
+
 
 if __name__ == "__main__":
     main()
