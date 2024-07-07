@@ -9,13 +9,14 @@ from std_msgs.msg import Float32
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
 
+
 @pytest.mark.rostest
 def generate_test_description():
     tree_node = launch_ros.actions.Node(
         package='safety_controller',
         executable='tree_node',
         name='tree_node',
-        output='log',  
+        output='log',
         parameters=[],
         arguments=['--ros-args', '--log-level', 'error']
     )
@@ -46,7 +47,7 @@ class TestTreeNodeBehaviour(unittest.TestCase):
     def cmd_vel_callback(self, msg):
         self.cmd_vel_msgs.append(msg)
         self.node.get_logger().info(f'Received cmd_vel message: {msg}')
-        
+
     def cmd_vel_callback(self, msg):
         self.cmd_vel_msgs.append(msg)
         self.node.get_logger().info(f'Received cmd_vel message: {msg}')
@@ -55,7 +56,6 @@ class TestTreeNodeBehaviour(unittest.TestCase):
         scan = LaserScan()
         scan.ranges = ranges
         self.pub_scan.publish(scan)
-
 
     def test_battery_status(self, tree_node, proc_output):
         subscription_cmd_vel = self.node.create_subscription(
@@ -75,7 +75,8 @@ class TestTreeNodeBehaviour(unittest.TestCase):
             self.node.get_logger().info('Waiting for nodes to set up...')
             time.sleep(3)
 
-            self.node.get_logger().info(f'Available topics: {self.node.get_topic_names_and_types()}')
+            self.node.get_logger().info(
+                f'Available topics: {self.node.get_topic_names_and_types()}')
 
             # Publish a low battery voltage to trigger rotation
             msg = Float32()
@@ -90,12 +91,13 @@ class TestTreeNodeBehaviour(unittest.TestCase):
                 if len(self.cmd_vel_msgs) > 2:
                     break
 
-            self.assertGreater(len(self.cmd_vel_msgs), 2, "No cmd_vel messages received, behavior tree might not be running")
+            self.assertGreater(len(
+                self.cmd_vel_msgs), 2, "No cmd_vel messages received, behavior tree might not be running")
 
             for msg in self.cmd_vel_msgs:
-                self.assertIsInstance(msg, Twist, "Received message is not of type Twist")
+                self.assertIsInstance(
+                    msg, Twist, "Received message is not of type Twist")
                 self.assertNotEqual(msg.angular.z, 0, "Robot is not rotating")
-
 
         finally:
             self.node.destroy_subscription(subscription_cmd_vel)
@@ -138,7 +140,8 @@ class TestTreeNodeBehaviour(unittest.TestCase):
                 if any(msg.linear.x == 0 and msg.angular.z == 0 for msg in self.cmd_vel_msgs):
                     break
 
-            self.assertTrue(any(msg.linear.x == 0 and msg.angular.z == 0 for msg in self.cmd_vel_msgs), "Robot did not stop despite close obstacle")
+            self.assertTrue(any(msg.linear.x == 0 and msg.angular.z ==
+                            0 for msg in self.cmd_vel_msgs), "Robot did not stop despite close obstacle")
 
         finally:
             self.node.destroy_subscription(subscription_cmd_vel)
@@ -179,7 +182,8 @@ class TestTreeNodeBehaviour(unittest.TestCase):
             while time.time() < end_time:
                 rclpy.spin_once(self.node, timeout_sec=1)
 
-            self.assertTrue(all(msg.linear.x != 0 or msg.angular.z != 0 for msg in self.cmd_vel_msgs), "Robot stopped despite no obstacles")
+            self.assertTrue(all(msg.linear.x != 0 or msg.angular.z !=
+                            0 for msg in self.cmd_vel_msgs), "Robot stopped despite no obstacles")
 
         finally:
             self.node.destroy_subscription(subscription_cmd_vel)
@@ -220,7 +224,8 @@ class TestTreeNodeBehaviour(unittest.TestCase):
                 if any(msg.linear.x == 0 and msg.angular.z == 0 for msg in self.cmd_vel_msgs):
                     break
 
-            self.assertTrue(any(msg.linear.x == 0 and msg.angular.z == 0 for msg in self.cmd_vel_msgs), "Robot did not stop despite close obstacle")
+            self.assertTrue(any(msg.linear.x == 0 and msg.angular.z ==
+                            0 for msg in self.cmd_vel_msgs), "Robot did not stop despite close obstacle")
 
             scan_msg = LaserScan()
             scan_msg.ranges = [5.0] * 360  # No obstacles nearby
@@ -240,13 +245,14 @@ class TestTreeNodeBehaviour(unittest.TestCase):
                 rclpy.spin_once(self.node, timeout_sec=1)
 
             # Assert that the robot resumed motion
-            self.assertTrue(any(msg.linear.x != 0 or msg.angular.z != 0 for msg in self.cmd_vel_msgs), "Robot did not resume motion despite obstacle removal")
+            self.assertTrue(any(msg.linear.x != 0 or msg.angular.z != 0 for msg in self.cmd_vel_msgs),
+                            "Robot did not resume motion despite obstacle removal")
 
         finally:
             self.node.destroy_subscription(subscription_cmd_vel)
             self.node.destroy_publisher(pub_scan)
 
+
 if __name__ == '__main__':
     import launch_testing.main
     launch_testing.main()
-
