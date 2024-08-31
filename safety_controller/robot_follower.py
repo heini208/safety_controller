@@ -105,7 +105,22 @@ class DynamicRobotFollowerNode(Node):
         middle_index = len(robots_x_positions) // 2
 
         self.lead_robot = robots_x_positions[middle_index][0]
+
+        # Reorder the robot publishers and subscribers based on x positions
+        sorted_publishers = {name: self.robot_publishers[name]
+                             for name, _ in robots_x_positions if name in self.robot_publishers}
+        sorted_subscribers = {name: self.robot_subscribers[name]
+                              for name, _ in robots_x_positions if name in self.robot_subscribers}
+
+        self.robot_publishers = sorted_publishers
+        self.robot_subscribers = sorted_subscribers
+
         self.get_logger().info(f'Lead robot determined: {self.lead_robot}')
+        self.get_logger().info(
+            f'Robot publishers ordered: {list(self.robot_publishers.keys())}')
+        self.get_logger().info(
+            f'Robot subscribers ordered: {list(self.robot_subscribers.keys())}')
+
         return self.lead_robot
 
     def wait_for_message(self, msg_type, topic, timeout=10.0):
