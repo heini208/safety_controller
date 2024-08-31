@@ -5,6 +5,7 @@ from rclpy.qos import QoSProfile
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 import numpy as np
+import time
 
 
 class DynamicRobotFollowerNode(Node):
@@ -25,14 +26,64 @@ class DynamicRobotFollowerNode(Node):
 
         # Discover robots
         self.discover_robots()
+        self.lead_timer = self.create_timer(0.5, self.check_lead_robot)
 
-        # Subscribers
-        for robot_name in self.robot_odometry.keys():
-            self.create_subscription(Odometry, f'/{robot_name}/odom',
-                                     lambda msg, name=robot_name: self.odom_callback(msg, name), QoSProfile(depth=10))
+    def check_lead_robot(self):
+        if self.lead_robot is None:
+            self.get_logger().info("Waiting for lead robot to be determined...")
+        else:
+            self.get_logger().info(f"Lead robot determined timer stopping")
+            self.lead_timer.cancel()
+            self.initialize_target_positions()
 
-        self.get_logger().info(
-            f'Discovered robots: {list(self.robot_publishers.keys())}')
+    def initialize_target_positions(self):
+        """Initializes target positions for each robot relative to the lead robot."""
+        self.target_positions = {}
+        lead_index = list(self.robot_publishers.keys()).index(self.lead_robot)
+
+        for i, robot_name in enumerate(self.robot_publishers):
+            # Distance of 0.5 meters apart in x
+            relative_position_x = (i - lead_index) * 0.5
+            relative_position_y = 0.0  # All robots should have y=0 in target position
+            relative_position_z = 0.0  # All robots should have z=0 in target position
+            # No rotation relative to the lead robot
+            target_orientation = [0.0, 0.0, 0.0, 1.0]
+
+            # Create a new Odometry message for the target position
+            target_odom = Odometry()
+
+            # Set the target position
+            target_odom.pose.pose.position.x = relative_position_x
+            target_odom.pose.pose.position.y = relative_position_y
+            target_odom.pose.pose.position.z = relative_position_z
+
+            # Set the target orientation
+            target_odom.pose.pose.orientation.x = target_orientation[0]
+            target_odom.pose.pose.orientation.y = target_orientation[1]
+            target_odom.pose.pose.orientation.z = target_orientation[2]
+            target_odom.pose.pose.orientation.w = target_orientation[3]
+
+            # Set the header information
+            target_odom.header.stamp = self.get_clock().now().to_msg()
+            target_odom.header.frame_id = 'relative_to_' + self.lead_robot
+
+            # Store the target odometry in the dictionary
+            self.target_positions[robot_name] = target_odom
+
+            self.get_logger().info(
+                f"Target position for {robot_name}: x={relative_position_x}, y={relative_position_y}, z={relative_position_z}")
+
+        return self.target_positions
+
+    def print_relative(self):
+        for robot_name in self.robot_publishers.keys():
+            if robot_name != self.lead_robot:
+                print(robot_name)
+                relative_odom = self.get_relative_odometry(robot_name)
+                if relative_odom:
+                    relative_position = relative_odom.pose.pose.position
+                    self.get_logger().info(
+                        f"Relative position of {robot_name} to {self.lead_robot}: x={relative_position.x}, y={relative_position.y}, z={relative_position.z}")
 
     def discover_robots(self):
         topics = self.get_topic_names_and_types()
@@ -52,8 +103,12 @@ class DynamicRobotFollowerNode(Node):
 
         if not self.robot_publishers:
             self.get_logger().error('No robots discovered.')
-            rclpy.sleep(rclpy.duration.Duration(seconds=2))
+            time.sleep(5)
             self.discover_robots()
+            return
+
+        self.get_logger().info(
+            f'Discovered robots: {list(self.robot_publishers.keys())}')
 
     def odom_callback(self, msg, robot_name):
         # Update the odometry for the specific robot
@@ -141,6 +196,73 @@ class DynamicRobotFollowerNode(Node):
         for subscriber in self.robot_subscribers.values():
             self.destroy_subscription(subscriber)
         super().destroy_node()
+
+    def get_relative_odometry(self, robot_name):
+        """Returns the odometry of the given robot relative to the lead robot."""
+        if self.lead_robot is None:
+            self.get_logger().error("Lead robot has not been determined yet.")
+            return None
+        elif robot_name not in self.robot_odometry:
+            self.get_logger().error(f"Robot {robot_name} not found.")
+            return None
+        elif self.robot_odometry[robot_name] is None or self.robot_odometry[self.lead_robot] is None:
+            self.get_logger().error(
+                f"Odometry data for {robot_name} or lead robot is missing.")
+            return None
+
+        # Get the absolute positions and orientations (directly from Pose object)
+        robot_pose = self.robot_odometry[robot_name]
+        lead_pose = self.robot_odometry[self.lead_robot]
+
+        # Compute relative position
+        relative_position = [
+            robot_pose.position.x - lead_pose.position.x,
+            robot_pose.position.y - lead_pose.position.y,
+            robot_pose.position.z - lead_pose.position.z,
+        ]
+
+        # Compute relative orientation using quaternion multiplication
+        # Relative orientation = robot_orientation * inverse(lead_orientation)
+        lead_quaternion = [
+            lead_pose.orientation.x,
+            lead_pose.orientation.y,
+            lead_pose.orientation.z,
+            lead_pose.orientation.w,
+        ]
+        robot_quaternion = [
+            robot_pose.orientation.x,
+            robot_pose.orientation.y,
+            robot_pose.orientation.z,
+            robot_pose.orientation.w,
+        ]
+
+        lead_quaternion_inv = tf_transformations.quaternion_inverse(
+            lead_quaternion)
+        relative_quaternion = tf_transformations.quaternion_multiply(
+            robot_quaternion, lead_quaternion_inv)
+
+        # Create a new Odometry message for the relative odometry
+        relative_odom = Odometry()
+
+        # Set the relative position
+        relative_odom.pose.pose.position.x = relative_position[0]
+        relative_odom.pose.pose.position.y = relative_position[1]
+        relative_odom.pose.pose.position.z = relative_position[2]
+
+        # Set the relative orientation
+        relative_odom.pose.pose.orientation.x = relative_quaternion[0]
+        relative_odom.pose.pose.orientation.y = relative_quaternion[1]
+        relative_odom.pose.pose.orientation.z = relative_quaternion[2]
+        relative_odom.pose.pose.orientation.w = relative_quaternion[3]
+
+        # Set the header information
+        relative_odom.header.stamp = self.get_clock().now().to_msg()
+        relative_odom.header.frame_id = 'relative_to_' + self.lead_robot
+
+        self.get_logger().info(
+            f"Relative odometry for {robot_name} relative to {self.lead_robot} calculated.")
+
+        return relative_odom
 
 
 def main(args=None):
