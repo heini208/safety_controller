@@ -406,7 +406,8 @@ class DynamicRobotFollowerNode(Node):
             target_pos[1] - current_pos[1], target_pos[0] - current_pos[0])
 
         # Get the robot's current orientation in radians
-        current_orientation = current_relative_odom.pose.pose.orientation
+        current_orientation = self.robot_odometry[robot_name].orientation
+
         current_angle = tf_transformations.euler_from_quaternion(
             [current_orientation.x, current_orientation.y,
                 current_orientation.z, current_orientation.w]
