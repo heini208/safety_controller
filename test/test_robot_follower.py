@@ -5,7 +5,7 @@ import launch_ros
 import launch_testing
 import rclpy
 import pytest
-from geometry_msgs.msg import Twist, Pose
+from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from safety_controller.robot_follower import DynamicRobotFollowerNode
 from unittest.mock import MagicMock
@@ -78,8 +78,8 @@ class TestDynamicRobotFollowerNode(unittest.TestCase):
     def odom_callback(self, msg, robot_name):
         self.received_odom_msgs[robot_name] = msg
 
-    def cmd_vel_callback(self, msg):
-        self.cmd_vel_msgs.append(msg)
+    def cmd_vel_callback(self, msg, robot_name):
+        self.cmd_vel_msgs[robot_name] = msg
         self.node.get_logger().info(f'Received cmd_vel message: {msg}')
 
     def test_robot_discovery(self, follower_node, proc_output):
