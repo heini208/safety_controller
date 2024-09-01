@@ -7,6 +7,7 @@ from nav_msgs.msg import Odometry
 import numpy as np
 import time
 import math
+import threading
 
 
 class DynamicRobotFollowerNode(Node):
@@ -18,7 +19,8 @@ class DynamicRobotFollowerNode(Node):
         self.robot_odometry = {}
         self.initial_world_odometry = {}  # Dictionary to store initial world odometry
         self.lead_robot = None
-        self.aligning_robots = set()
+        self.aligning_position = set()
+        self.aligning_orientation = set()
         self.target_positions = {}
 
         # Discover robots
@@ -32,12 +34,19 @@ class DynamicRobotFollowerNode(Node):
             self.get_logger().info(f"Lead robot determined timer stopping")
             self.lead_timer.cancel()
             self.initialize_target_positions()
-            self.create_timer(0.5, self.check_robot_position)
+            # Start a thread for each robot to check its position
+            for robot_name in self.robot_publishers:
+                if robot_name != self.lead_robot:
+                    thread = threading.Thread(
+                        target=self.monitor_robot_position, args=(robot_name,))
+                    thread.daemon = True  # Ensures the thread will close when the program exits
+                    thread.start()
 
-    def check_robot_position(self):
-        for i, robot_name in enumerate(self.robot_publishers):
-            if robot_name != self.lead_robot:
-                self.navigate_to_target(robot_name)
+    def monitor_robot_position(self, robot_name):
+        """Thread function to continuously check the position of the robot."""
+        while True:
+            self.navigate_to_target(robot_name)
+            time.sleep(0.1)  # Check position every 0.1 seconds
 
     def initialize_target_positions(self):
         """Initializes target positions for each robot relative to the lead robot."""
@@ -46,8 +55,8 @@ class DynamicRobotFollowerNode(Node):
         for i, robot_name in enumerate(self.robot_publishers):
             # Distance of 0.5 meters apart in x
             relative_position_x = (i - lead_index) * 0.5
-            relative_position_y = 0.0  # All robots should have y=0 in target position
-            relative_position_z = 0.0  # All robots should have z=0 in target position
+            relative_position_y = 0.0
+            relative_position_z = 0.0
             # No rotation relative to the lead robot
             target_orientation = [0.0, 0.0, 0.0, 1.0]
 
@@ -80,7 +89,6 @@ class DynamicRobotFollowerNode(Node):
     def print_relative(self):
         for robot_name in self.robot_publishers.keys():
             if robot_name != self.lead_robot:
-                print(robot_name)
                 relative_odom = self.get_relative_odometry(robot_name)
                 if relative_odom:
                     relative_position = relative_odom.pose.pose.position
@@ -266,7 +274,7 @@ class DynamicRobotFollowerNode(Node):
 
         return relative_odom
 
-    def navigate_to_target(self, robot_name, alignment_threshold=0.12):
+    def navigate_to_target(self, robot_name, alignment_threshold=0.12, angle_threshold=0.1):
         """Check the current position of the robot and navigate it to the target position if misaligned."""
 
         if robot_name not in self.target_positions:
@@ -285,25 +293,90 @@ class DynamicRobotFollowerNode(Node):
         # Calculate current relative position
         current_pos = [current_pos.x, current_pos.y]
         target_pos = [target_pos.x, target_pos.y]
-
         distance = self.calculate_distance(current_pos, target_pos)
+        angle_diff = self.get_orientation_distance(robot_name)
 
         # Check if the robot is within the threshold
-        if distance > alignment_threshold and not (robot_name in self.aligning_robots):
-            self.aligning_robots.add(robot_name)
-            self.send_navigation_command(robot_name, current_pos, target_pos)
+        if abs(distance) > alignment_threshold and not (robot_name in self.aligning_position):
+            if (robot_name in self.aligning_orientation):
+                self.aligning_orientation.remove(robot_name)
+
+            self.aligning_position.add(robot_name)
+            self.send_navigation_command(
+                robot_name, current_pos, target_pos, distance)
+
+        elif (abs(distance) <= alignment_threshold):
+            if (robot_name in self.aligning_position):
+                self.aligning_position.remove(robot_name)
+                self.stop_robot(robot_name)
+            else:
+                if (abs(angle_diff) > angle_threshold) and not (robot_name in self.aligning_orientation):
+                    self.aligning_orientation.add(robot_name)
+                    self.align_orientation(robot_name, angle_diff)
+                elif (abs(angle_diff) <= angle_threshold):
+                    self.stop_robot(robot_name)
+
+        if (robot_name in self.aligning_orientation):
+            self.aligning_orientation.remove(robot_name)
+        if (robot_name in self.aligning_position):
+            self.aligning_position.remove(robot_name)
+
+    def stop_robot(self, robot_name):
+        stop_cmd = Twist()
+        if robot_name in self.robot_publishers:
+            self.robot_publishers[robot_name].publish(stop_cmd)
+            self.get_logger().info(
+                f"{robot_name} is aligned with target. Stopping.")
         else:
-            # Stop the robot if it's within the threshold
+            self.get_logger().error(
+                f"No publisher found for {robot_name}.")
+
+    def get_orientation_distance(self, robot_name):
+        target_angle = 0
+
+        # Get the robot's current orientation in radians
+        current_orientation = self.get_relative_odometry(
+            robot_name).pose.pose.orientation
+        current_angle = self.get_yaw_from_quaternion(current_orientation)
+
+        # Compute the angular difference
+        angle_diff = target_angle - current_angle
+
+        # Normalize the angle difference to be within -pi to pi
+        return (angle_diff + math.pi) % (2 * math.pi) - math.pi
+
+    def align_orientation(self, robot_name, angle_diff):
+        """Align the robot's orientation to zero relative to the lead robot."""
+
+        # Define proportional gains for angular alignment
+        K_angular = 1.5  # Angular velocity gain
+
+        # Set angular velocity based on angle difference
+        cmd = Twist()
+        cmd.angular.z = K_angular * angle_diff
+
+        # Publish command
+        if robot_name in self.robot_publishers:
+            self.robot_publishers[robot_name].publish(cmd)
+            self.get_logger().info(
+                f"Sending orientation command to {robot_name}: Angular={cmd.angular.z}")
+        else:
+            self.get_logger().error(
+                f"No publisher found for robot {robot_name}")
+
+        # Check if the robot is oriented correctly
+        if abs(angle_diff) < 0.1:  # Threshold for angular alignment
+            # Stop the robot if it's within the angular threshold
             stop_cmd = Twist()
+            stop_cmd.linear.x = 0.0
+            stop_cmd.angular.z = 0.0
             if robot_name in self.robot_publishers:
                 self.robot_publishers[robot_name].publish(stop_cmd)
                 self.get_logger().info(
-                    f"{robot_name} is aligned with target. Stopping.")
+                    f"{robot_name} is aligned with target orientation. Stopping.")
             else:
                 self.get_logger().error(
-                    f"No publisher found for {robot_name}.")
-        if robot_name in self.aligning_robots:
-            self.aligning_robots.remove(robot_name)
+                    f"No publisher found for robot {robot_name}.")
 
     def get_yaw_from_quaternion(self, orientation):
         """Convert quaternion to yaw angle."""
@@ -322,12 +395,13 @@ class DynamicRobotFollowerNode(Node):
     def calculate_distance(self, pos1, pos2):
         return math.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
 
-    def send_navigation_command(self, robot_name, current_pos, target_pos):
+    def send_navigation_command(self, robot_name, current_pos, target_pos, distance):
+        """Send navigation command to align the robot with the target position in two steps: rotation and then driving straight."""
+
         # Get the current relative position of the robot and its target position
         current_relative_odom = self.get_relative_odometry(robot_name)
 
-        # Calculate the distance and angle to the target
-        distance = self.calculate_distance(current_pos, target_pos)
+        # Calculate the target angle
         target_angle = math.atan2(
             target_pos[1] - current_pos[1], target_pos[0] - current_pos[0])
 
@@ -346,21 +420,29 @@ class DynamicRobotFollowerNode(Node):
 
         # Define proportional gains
         K_linear = 1.0  # Linear velocity gain
-        K_angular = 4.0  # Angular velocity gain
+        K_angular = 2  # Angular velocity gain
 
-        # Set linear and angular velocity based on distance and angle
         cmd = Twist()
-        cmd.linear.x = K_linear * distance   # Scale linear velocity
-        scaling_factor = min(0.1 / cmd.linear.x, 1)
-        cmd.linear.x = cmd.linear.x * scaling_factor
-        # Angular velocity proportional to angle difference
-        cmd.angular.z = K_angular * angle_diff * scaling_factor
+
+        # Phase 1: Rotate towards the target position
+        if abs(angle_diff) > 0.1:  # Threshold for rotation
+            cmd.angular.z = K_angular * angle_diff
+            cmd.linear.x = 0.0
+            self.get_logger().info(
+                f"Rotating {robot_name}: Angular={cmd.angular.z}")
+        else:
+            # Phase 2: Drive straight towards the target position
+            cmd.angular.z = 0.0
+            cmd.linear.x = K_linear * distance  # Scale linear velocity
+            scaling_factor = min(abs(0.1 / cmd.linear.x),
+                                 1) if cmd.linear.x != 0 else 1
+            cmd.linear.x *= scaling_factor
+            self.get_logger().info(
+                f"Driving {robot_name}: Linear={cmd.linear.x}")
 
         # Publish command
         if robot_name in self.robot_publishers:
             self.robot_publishers[robot_name].publish(cmd)
-            self.get_logger().info(
-                f"Sending command to {robot_name}: Linear={cmd.linear.x}, Angular={cmd.angular.z}")
         else:
             self.get_logger().error(
                 f"No publisher found for robot {robot_name}")
