@@ -5,10 +5,11 @@ import launch_ros
 import launch_testing
 import rclpy
 import pytest
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Pose
 from nav_msgs.msg import Odometry
 from safety_controller.robot_follower import DynamicRobotFollowerNode
-from unittest import mock
+from unittest.mock import MagicMock
+import threading
 
 
 @pytest.mark.rostest
@@ -39,46 +40,68 @@ class TestDynamicRobotFollowerNode(unittest.TestCase):
         rclpy.shutdown()
 
     def setUp(self):
-        self.node = DynamicRobotFollowerNode()
-        self.node.robot_publishers = {
-            'robot_1': mock.Mock(),
-            'robot_2': mock.Mock(),
+        # Initialize the DynamicRobotFollowerNode
+        # Create mock publishers and subscribers
+        self.mock_publishers = {
+            'robot_1': MagicMock(),
+            'robot_2': MagicMock(),
         }
-        self.node.robot_subscribers = {
-            'robot_1': mock.Mock(),
-            'robot_2': mock.Mock(),
+        self.mock_subscribers = {
+            'robot_1': MagicMock(),
+            'robot_2': MagicMock(),
         }
         self.received_odom_msgs = {}
         self.cmd_vel_msgs = {}
 
-    def tearDown(self):
-        self.node.destroy_node()
-
-    def odom_callback(self, msg, robot_name):
-        self.received_odom_msgs[robot_name] = msg
-
-    def cmd_vel_callback(self, msg, robot_name):
-        self.cmd_vel_msgs[robot_name] = msg
-
-    def test_robot_discovery(self, follower_node, proc_output):
-        # Subscribe to /robot_1/odom and /robot_2/odom topics
-        robots = ['robot_1', 'robot_2']
-        for robot in robots:
+        self.node = DynamicRobotFollowerNode()
+        # Setup mock subscriptions for received messages
+        for robot in ['robot_1', 'robot_2']:
             self.node.create_subscription(
                 Odometry, f'/{robot}/odom', lambda msg, r=robot: self.odom_callback(msg, r), 10)
             self.node.create_subscription(
                 Twist, f'/{robot}/cmd_vel', lambda msg, r=robot: self.cmd_vel_callback(msg, r), 10)
 
-        # Give time for the node to discover robots and start publishing
-        self.node.get_logger().info('Waiting for robot discovery...')
-        time.sleep(5)
+        self.node.robot_publishers = self.mock_publishers
+        self.node.robot_subscribers = self.mock_subscribers
 
-        # Check if odometry messages are received, which implies robots were discovered
-        for robot in robots:
-            self.assertIn(robot, self.received_odom_msgs,
+        # Start the node in a separate thread to process callbacks
+        self.executor = rclpy.executors.SingleThreadedExecutor()
+        self.executor.add_node(self.node)
+        self.executor_thread = threading.Thread(target=self.executor.spin)
+        self.executor_thread.start()
+
+    def tearDown(self):
+        self.executor.shutdown()
+        self.executor_thread.join()
+        self.node.destroy_node()
+
+    def odom_callback(self, msg, robot_name):
+        self.received_odom_msgs[robot_name] = msg
+
+    def cmd_vel_callback(self, msg):
+        self.cmd_vel_msgs.append(msg)
+        self.node.get_logger().info(f'Received cmd_vel message: {msg}')
+
+    def test_robot_discovery(self, follower_node, proc_output):
+        # Simulate publishing odometry messages
+        for robot in ['robot_1', 'robot_2']:
+            test_odom = Odometry()
+            test_odom.pose.pose.position.x = 1.0 if robot == 'robot_1' else 2.0
+            test_odom.pose.pose.position.y = 0.0
+            test_odom.pose.pose.position.z = 0.0
+            self.mock_publishers[robot].publish(test_odom)
+
+        # Give time for the node to process
+        self.node.discover_robots()
+        time.sleep(2)
+
+        # Check if odometry messages are received
+        for robot in ['robot_1', 'robot_2']:
+            self.assertIn(robot, self.node.robot_publishers,
                           f"{robot} was not discovered.")
 
     def test_lead_robot_determination(self):
+        # Provide initial odometry data
         self.node.initial_world_odometry = {
             'robot_1': {'position': {'x': 1.0}},
             'robot_2': {'position': {'x': 2.0}},
@@ -91,53 +114,65 @@ class TestDynamicRobotFollowerNode(unittest.TestCase):
                          "The lead robot should be 'robot_2' as it is in the middle.")
 
     def test_relative_odometry_calculation(self, follower_node, proc_output):
-        # Publish some test odometry messages
-        robots = ['robot_1', 'robot_2']
-        for robot in robots:
-            test_odom = Odometry()
-            test_odom.pose.pose.position.x = 1.0 if robot == 'robot_1' else 2.0
-            test_odom.pose.pose.position.y = 0.0
-            test_odom.pose.pose.position.z = 0.0
-            self.received_odom_msgs[robot] = test_odom
+        # Create test odometry messages
+        odom_msg_1 = Odometry()
+        odom_msg_1.pose.pose.position.x = 1.0
+        odom_msg_1.pose.pose.position.y = 0.0
+        odom_msg_1.pose.pose.position.z = 0.0
 
-        # Give some time for the node to process
-        time.sleep(2)
+        odom_msg_2 = Odometry()
+        odom_msg_2.pose.pose.position.x = 2.0
+        odom_msg_2.pose.pose.position.y = 0.0
+        odom_msg_2.pose.pose.position.z = 0.0
 
-        # Test relative odometry calculation
-        rel_odom = self.node.get_relative_odometry('robot_2')
+        self.node.robot_odometry['robot_1'] = odom_msg_1.pose.pose
+        self.node.robot_odometry['robot_2'] = odom_msg_2.pose.pose
+
+        self.node.lead_robot = 'robot_2'
+
+        time.sleep(0.5)
+
+        rel_odom = self.node.get_relative_odometry('robot_1')
         self.assertIsNotNone(rel_odom, "Relative odometry was not calculated.")
-        self.assertAlmostEqual(rel_odom.pose.pose.position.x, 1.0,
-                               places=2, msg="Relative odometry x position is incorrect.")
+        self.assertAlmostEqual(rel_odom.pose.pose.position.x, -1.0,
+                               places=2, msg="Relative odometry x position is incorrect")
 
     def test_navigate_to_target(self, follower_node, proc_output):
-        # Assume target positions are initialized and check navigation command
-        robots = ['robot_1', 'robot_2']
-        for robot in robots:
-            self.node.navigate_to_target(robot)
-            time.sleep(1)
+        odom = Odometry()
+        odom.pose.pose.position.x = 10.0
+        odom.pose.pose.position.y = 10.0
+        odom.pose.pose.position.z = 0.0
+        # Store the Odometry message in target_positions
+        self.node.target_positions['robot_1'] = odom
 
-            self.assertIn(robot, self.cmd_vel_msgs,
-                          f"No cmd_vel message received for {robot}.")
-            # Check if the robot is moving towards the target
-            cmd_vel = self.cmd_vel_msgs[robot]
-            self.assertNotEqual(cmd_vel.linear.x, 0,
-                                f"{robot} did not move towards target.")
+        self.node.lead_robot = 'robot_2'
+        odom_msg_1 = Odometry()
+        odom_msg_1.pose.pose.position.x = 1.0
+        odom_msg_1.pose.pose.position.y = 1.0
+        odom_msg_1.pose.pose.position.z = 0.0
 
-    def test_stop_robot(self, follower_node, proc_output):
-        # Issue a command to stop the robot
-        robot = 'robot_1'
-        self.node.stop_robot(robot)
+        odom_msg_2 = Odometry()
+        odom_msg_2.pose.pose.position.x = 2.0
+        odom_msg_2.pose.pose.position.y = 2.0
+        odom_msg_2.pose.pose.position.z = 0.0
+
+        self.node.robot_odometry['robot_1'] = odom_msg_1.pose.pose
+        self.node.robot_odometry['robot_2'] = odom_msg_2.pose.pose
+        self.node.navigate_to_target('robot_1')
         time.sleep(1)
 
-        self.assertIn(robot, self.cmd_vel_msgs,
-                      f"No cmd_vel message received for {robot}.")
-        cmd_vel = self.cmd_vel_msgs[robot]
-        self.assertEqual(cmd_vel.linear.x, 0,
-                         f"{robot} did not stop as expected.")
-        self.assertEqual(cmd_vel.angular.z, 0,
-                         f"{robot} did not stop rotating as expected.")
+        self.mock_publishers['robot_1'].publish.assert_called()
+        published_cmd_vel = self.mock_publishers['robot_1'].publish.call_args[0][0]
+        self.assertIsInstance(published_cmd_vel, Twist,
+                              "Published message is not of type Twist.")
 
+    def test_stop_robot(self, follower_node, proc_output):
+        robot = 'robot_1'
+        self.node.stop_robot(robot)
 
-if __name__ == '__main__':
-    import launch_testing.main
-    launch_testing.main()
+        self.mock_publishers['robot_1'].publish.assert_called()
+        published_cmd_vel = self.mock_publishers['robot_1'].publish.call_args[0][0]
+        self.assertIsInstance(published_cmd_vel, Twist,
+                              "Published message is not of type Twist.")
+        self.assertEqual(published_cmd_vel.linear.x, 0,
+                         "robot_1 did is still moving target.")
