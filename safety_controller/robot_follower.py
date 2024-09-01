@@ -4,7 +4,6 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-import numpy as np
 import time
 import math
 import threading
@@ -31,7 +30,6 @@ class DynamicRobotFollowerNode(Node):
         if self.lead_robot is None:
             self.get_logger().info("Waiting for lead robot to be determined...")
         else:
-            self.get_logger().info(f"Lead robot determined timer stopping")
             self.lead_timer.cancel()
             self.initialize_target_positions()
             # Start a thread for each robot to check its position
@@ -397,10 +395,6 @@ class DynamicRobotFollowerNode(Node):
 
     def send_navigation_command(self, robot_name, current_pos, target_pos, distance):
         """Send navigation command to align the robot with the target position in two steps: rotation and then driving straight."""
-
-        # Get the current relative position of the robot and its target position
-        current_relative_odom = self.get_relative_odometry(robot_name)
-
         # Calculate the target angle
         target_angle = math.atan2(
             target_pos[1] - current_pos[1], target_pos[0] - current_pos[0])
