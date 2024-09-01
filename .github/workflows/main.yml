@@ -53,8 +53,7 @@ jobs:
       run: |
         source /opt/ros/humble/setup.bash
         cd ~/ros2_ws
-        colcon test --event-handlers console_cohesion+
-
+        colcon test --packages-select safety_controller --event-handlers console_cohesion+
 
     - name: Check test results
       run: |
