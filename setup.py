@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'state_node = safety_controller.state_machine:main',
             'tree_node = safety_controller.tree:main',
+            'follower_node = safety_controller.robot_follower:main'
         ],
     },
 )
