@@ -52,14 +52,6 @@ class TestDynamicRobotFollowerNode(unittest.TestCase):
         }
         self.received_odom_msgs = {}
         self.cmd_vel_msgs = {}
-
-        for robot in ['robot_1', 'robot_2']:
-            test_odom = Odometry()
-            test_odom.pose.pose.position.x = 1.0 if robot == 'robot_1' else 2.0
-            test_odom.pose.pose.position.y = 0.0
-            test_odom.pose.pose.position.z = 0.0
-            self.mock_publishers[robot].publish(test_odom)
-
         self.node = DynamicRobotFollowerNode()
 
         # Setup mock subscriptions for received messages

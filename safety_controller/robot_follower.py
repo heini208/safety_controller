@@ -23,7 +23,7 @@ class DynamicRobotFollowerNode(Node):
         self.target_positions = {}
 
         # Discover robots
-        self.discover_robots()
+        self.discover_timer = self.create_timer(2, self.check_discover_robots)
         self.lead_timer = self.create_timer(0.5, self.check_lead_robot)
 
     def check_lead_robot(self):
@@ -39,6 +39,14 @@ class DynamicRobotFollowerNode(Node):
                         target=self.monitor_robot_position, args=(robot_name,))
                     thread.daemon = True  # Ensures the thread will close when the program exits
                     thread.start()
+
+    def check_discover_robots(self):
+        self.discover_robots()
+        if not self.robot_publishers:
+            self.get_logger().error('No robots discovered.')
+            return
+        else:
+            self.discover_timer.cancel()
 
     def monitor_robot_position(self, robot_name):
         """Thread function to continuously check the position of the robot."""
@@ -108,12 +116,6 @@ class DynamicRobotFollowerNode(Node):
 
                 self.robot_subscribers[robot_name] = self.create_subscription(Odometry, f'/{robot_name}/odom',
                                                                               lambda msg, name=robot_name: self.odom_callback(msg, name), QoSProfile(depth=10))
-
-        if not self.robot_publishers:
-            self.get_logger().error('No robots discovered.')
-            time.sleep(5)
-            self.discover_robots()
-            return
 
         self.get_logger().info(
             f'Discovered robots: {list(self.robot_publishers.keys())}')
